@@ -417,12 +417,7 @@ fn main {
   let row_body = fn(it : LItem, active : Bool) -> @core.Node {
     @ui.col(
       [
-        @ui.text(
-          it.title,
-          font_size=14.0,
-          weight=@text.SemiBold,
-          color=if active { "" } else { "" },
-        ),
+        @ui.text(it.title, font_size=14.0, weight=@text.SemiBold),
         @ui.text(it.sub, font_size=11.0, color="#888888"),
       ],
       row_gap=2.0,
@@ -453,11 +448,13 @@ fn main {
   }
 
   let row_of : (LItem) -> @core.Node = fn(it : LItem) {
-    @ui.when_else_store(
-      selected_id,
-      row_body(it, true),
+    // swap_node 位序：信号假显 a（常态行）、真显 b（选中行）。
+    // 不走通用 when_else_store：0.1.1 该档把 (then, otherwise) 原样喂给
+    // swap_node，极性与文档相反（布尔档 when_else_bool 才是自实现的正确路径）。
+    @core.swap_node(
+      selected_id.signal().map(fn(v : String) -> Bool { v == it.id }),
       row_body(it, false),
-      pred=fn(v : String) -> Bool { v == it.id },
+      row_body(it, true),
     )
   }
 
