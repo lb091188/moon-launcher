@@ -1,0 +1,14 @@
+# moon 构建产物
+**/_build/
+**/target/
+*.core
+*.generated.mbti
+
+# mooncakes 依赖缓存（moon install 下载，勿入库）
+**/.mooncakes/
+
+# 跨仓库联调的本地路径解析（只活在开发机，勿入库）
+/moon.work
+
+# Python 缓存
+**/__pycache__/

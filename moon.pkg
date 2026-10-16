@@ -1,0 +1,7 @@
+import {
+  "NoahLiu/native-gui/ui",
+}
+
+pkgtype(kind: "executable")
+
+supported_targets = "native"
