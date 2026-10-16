@@ -1,5 +1,8 @@
 import {
   "NoahLiu/native-gui/ui",
+  "NoahLiu/native-gui/core",
+  "NoahLiu/native-gui/sys",
+  "NoahLiu/native-gui/text",
 }
 
 pkgtype(kind: "executable")
