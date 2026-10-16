@@ -3,6 +3,8 @@ import {
   "NoahLiu/native-gui/core",
   "NoahLiu/native-gui/sys",
   "NoahLiu/native-gui/text",
+  "NoahLiu/native-gui/theme",
+  "NoahLiu/native-gui/dbus",
 }
 
 pkgtype(kind: "executable")
