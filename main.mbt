@@ -10,7 +10,7 @@ const INPUT_FOCUS_ID : Int = 101
 
 const APP_DBUS_ID : String = "io.github.lb091188.moon-launcher"
 
-const RESULT_LIMIT : Int = 9
+const RESULT_LIMIT : Int = 8
 
 ///| 结果条目：三源统一形态。url 非空走 open_url，否则 exec 解析后启动。
 struct LItem {
@@ -355,13 +355,24 @@ fn main {
     } else {
       top_matches(all, q, RESULT_LIMIT)
     }
-    results.splice(0, results.length(), top)
+    // 先定选中再换列表：行控件建行时静态读 selected_id，顺序反了首帧丢高亮
     selected_id.set(if top.length() > 0 { top[0].id } else { "" })
+    results.splice(0, results.length(), top)
     if q.length() > 0 && top.length() == 0 {
       status.set("无匹配，换个关键词")
     } else {
       status.set(counts + " · 显示 " + top.length().to_string() + " 条")
     }
+  }
+
+  // 选中变化后整列重建：for_list_indexed 按内容比对，同键不同对象即重挂该行
+  let redraw_rows : () -> Unit = fn() {
+    let cur = results.get()
+    let copy : Array[LItem] = []
+    for it in cur {
+      copy.push(it)
+    }
+    results.splice(0, results.length(), copy)
   }
 
   let move_sel : (Int) -> Unit = fn(delta : Int) {
@@ -384,6 +395,7 @@ fn main {
       idx = cur.length() - 1
     }
     selected_id.set(cur[idx].id)
+    redraw_rows()
   }
 
   let on_enter_cb : () -> Unit = fn() {
@@ -414,7 +426,10 @@ fn main {
     }
   }
 
-  let row_body = fn(it : LItem, active : Bool) -> @core.Node {
+  // 选中态建行时静态求值；选中变化走 redraw_rows 整列重建（确定性，不依赖
+  // 响应式订阅链——0.1.1 的通用 when_else 档还有极性 bug，见库 TODO P3）
+  let row_of : (LItem) -> @core.Node = fn(it : LItem) {
+    let active = it.id == selected_id.get()
     @ui.col(
       [
         @ui.text(it.title, font_size=14.0, weight=@text.SemiBold),
@@ -444,17 +459,6 @@ fn main {
           },
         )
       },
-    )
-  }
-
-  let row_of : (LItem) -> @core.Node = fn(it : LItem) {
-    // swap_node 位序：信号假显 a（常态行）、真显 b（选中行）。
-    // 不走通用 when_else_store：0.1.1 该档把 (then, otherwise) 原样喂给
-    // swap_node，极性与文档相反（布尔档 when_else_bool 才是自实现的正确路径）。
-    @core.swap_node(
-      selected_id.signal().map(fn(v : String) -> Bool { v == it.id }),
-      row_body(it, false),
-      row_body(it, true),
     )
   }
 
@@ -497,10 +501,9 @@ fn main {
             ),
             @ui.col(
               [
-                @ui.for_list(
+                @ui.for_list_indexed(
                   results,
                   fn(it : LItem, _i : Int) -> @core.Node { row_of(it) },
-                  key=fn(it : LItem) -> String { it.id },
                 ),
               ],
               row_gap=4.0,
@@ -513,7 +516,7 @@ fn main {
       ],
       title="moon-launcher",
       width=560,
-      height=520,
+      height=580,
       handle=fn(app : @core.App) {
         app_ref.val = Some(app)
         app.window.set_borderless(true)
